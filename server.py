@@ -70,9 +70,42 @@ def on_key_event(e):
             pressed_modifiers.discard(convert_key_from_keymaps_json(name))
             # print(pressed_modifiers)
 
+
+
+# Task Tray Icon
+import pystray
+from PIL import Image
+import webbrowser
+import os
+
+def on_open_settings(icon, item):
+    webbrowser.open("http://localhost:8000/setting")
+
+def on_quit(icon, item):
+    icon.stop()
+
+def on_copy_url():
+    import pyperclip
+    pyperclip.copy("http://localhost:8000/overlay")
+
+def setup_tray_icon():
+    icon_path = os.path.join(os.path.dirname(__file__), "public", "tray.png")
+    image = Image.open(icon_path)
+
+    icon = pystray.Icon("obs-keyinput-overlay", image, "KeyOverlay", menu=pystray.Menu(
+        pystray.MenuItem("設定を開く", on_open_settings),
+        pystray.MenuItem("URLをコピー", on_copy_url),
+        pystray.MenuItem("終了", on_quit)
+    ))
+    threading.Thread(target=icon.run, daemon=True).start()
+
+
+
+
 @app.on_event("startup")
 async def startup_event():
     threading.Thread(target=keyboard.hook, args=(on_key_event,), daemon=True).start()
+    setup_tray_icon()
     print("http://127.0.0.1:8000/overlay")
 
 if __name__ == "__main__":
