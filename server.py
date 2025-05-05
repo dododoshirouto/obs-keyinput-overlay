@@ -1,26 +1,23 @@
 from fastapi import FastAPI, WebSocket
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
-from pynput import keyboard
+import keyboard
 import asyncio
 import threading
 import json
 
 app = FastAPI()
 clients = set()
-
-# キーイベント送信用の非同期キュー
 key_event_queue = asyncio.Queue()
+loop = asyncio.get_event_loop()
+keymap_json_filename = "keymaps.json"
 
-
-# publicフォルダを/staticとしてマウント（例：/static/style.css）
+# public/overlayをマウント
 app.mount("/overlay", StaticFiles(directory="public/overlay"), name="overlay")
 
-# ルートアクセスで public/index.html を返す
 @app.get("/overlay")
 async def read_index():
     return FileResponse("public/overlay/index.html")
-
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -29,48 +26,38 @@ async def websocket_endpoint(websocket: WebSocket):
     try:
         while True:
             key = await key_event_queue.get()
-            print("send key:", key)
             await websocket.send_text(json.dumps({"keys": [key]}))
-    except Exception:
+    except Exception as e:
+        print("WebSocket Error:", e)
+    finally:
         clients.remove(websocket)
 
-
-loop = asyncio.get_event_loop()
-
-
-# pynputでキー入力を監視して、非同期キューに追加
-def on_press(key):
-    global loop
+def convert_key_from_keymaps_json(key: str) -> str:
     try:
-        k = key.char or str(key)
-        print("press key:", k)
-    except AttributeError:
-        k = str(key)
-    if loop and loop.is_running():
-        asyncio.run_coroutine_threadsafe(key_event_queue.put(k), loop)
+        with open(keymap_json_filename, encoding='utf-8') as f:
+            keymaps = json.load(f)
+        for keymap in keymaps:
+            if key in keymap["key"]:
+                return keymap["name"]
+    except Exception as e:
+        print("keymap error:", e)
+    return key
 
-
-def start_key_listener():
-    listener = keyboard.Listener(on_press=on_press)
-    listener.start()
-
+# 押されたキーの組み合わせを取得
+def on_key_event(e):
+    if e.event_type == "down":
+        pressed = keyboard._pressed_events.keys()
+        keys = [keyboard.key_to_scan_codes(k)[0] if isinstance(k, str) else k for k in pressed]
+        names = keyboard._pressed_events.keys()
+        combo = keyboard.get_hotkey_name()
+        converted = convert_key_from_keymaps_json(combo)
+        asyncio.run_coroutine_threadsafe(key_event_queue.put(converted), loop)
 
 @app.on_event("startup")
 async def startup_event():
-    global loop
-    loop = asyncio.get_event_loop()
-    threading.Thread(target=start_key_listener, daemon=True).start()
-
-
-# サーバ起動時にリスナーも別スレッドで動かす
-def run():
-    print_url()
-    threading.Thread(target=start_key_listener, daemon=True).start()
-
-
-def print_url():
+    threading.Thread(target=keyboard.hook, args=(on_key_event,), daemon=True).start()
     print("http://127.0.0.1:8000/overlay")
 
-
 if __name__ == "__main__":
-    run()
+    import uvicorn
+    uvicorn.run("server:app", reload=True)

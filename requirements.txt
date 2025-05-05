@@ -1,4 +1,5 @@
 fastapi
 uvicorn
-pynput
+# pynput
+keyboard
 python-socketio

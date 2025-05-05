@@ -16,5 +16,27 @@ body {
     font-size: 2em;
     padding: 0.2em 0.5em;
     border-radius: 0.3em;
-    font-family: sans-serif;
+    font-family: "LINE Seed JP_OTF", sans-serif;
+    font-weight: bold;
+
+    transition-property:
+        box-shadow 30ms ease-out,
+        transform 30ms ease-out,
+        opacity 200ms ease-in-out;
+    transform: translateY(0px);
+    box-shadow: 0px 14px rgba(0, 0, 0, 0.8);
+}
+
+.key.open {
+    opacity: 1;
+    transition-duration: 30ms, 30ms, 0ms;
+}
+
+.key:not(.open) {
+    opacity: 0;
+}
+
+.key.press {
+    box-shadow: 0px 7px rgba(0, 0, 0, 0.8);
+    transform: translateY(7px);
 }
