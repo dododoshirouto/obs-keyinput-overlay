@@ -6,14 +6,73 @@
     <title>Key Display Setting</title>
     <link rel="stylesheet" href="https://cdn.simplecss.org/simple.css" />
     <link rel="stylesheet" href="https://dododoshirouto.github.io/dodo-simple.css/sample/dodo-simple.css" />
+    <style>
+        .description {
+            font-size: 0.8em;
+            opacity: 0.8;
+        }
+    </style>
 </head>
 
 <body>
     <div id="main">
-
     </div>
+    <p><button id="saveBtn" class="submit">Save</button></p>
     <script>
+        var main = document.getElementById("main");
+        var config = [];
 
+        function init() {
+            fetch('/config.json').then(res => res.json()).then(json => { config = json; json.forEach(createInput) });
+        }
+
+        function createInput(data) {
+            let html = `<label>#name# : #input#</label>`;
+            html = html.replace("#name#", data.name);
+            let input = '';
+            switch (data.type) {
+                case "select":
+                    input = `<select>`;
+                    data.options.forEach(option => input += `<option value="${option}"${data.value == option ? " selected" : ""}>${option}</option>`);
+                    input += `</select>`;
+                    break;
+                default:
+                    input = `<input type="${data.type}" value="${data.value}">`;
+            }
+            html = html.replace("#input#", input);
+
+            let p = document.createElement("p");
+            p.innerHTML = html;
+            main.appendChild(p);
+
+            if (data.description) {
+                p.innerHTML += `<span class="description">${data.description}</span>`;
+                main.appendChild(p);
+            }
+
+            p.querySelector('input, select').onchange = () => {
+                data.value = p.querySelector('input, select').value;
+            }
+        }
+
+        init();
+
+
+        document.getElementById("saveBtn").addEventListener("click", () => {
+            fetch("/save-config", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify(config)
+            }).then(res => {
+                if (res.ok) {
+                    alert("保存しました！");
+                } else {
+                    alert("保存に失敗しました！");
+                }
+            });
+        });
     </script>
 </body>
 

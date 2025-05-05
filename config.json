@@ -1,6 +1,18 @@
 [
     {
         "name": "port",
-        "value": 8000
+        "value": "8000",
+        "type": "number",
+        "description": "requires restart"
+    },
+    {
+        "name": "align",
+        "value": "left",
+        "type": "select",
+        "options": [
+            "left",
+            "center",
+            "right"
+        ]
     }
 ]

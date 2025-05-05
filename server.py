@@ -1,4 +1,4 @@
-from fastapi import FastAPI, WebSocket
+from fastapi import FastAPI, WebSocket, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import keyboard
@@ -15,13 +15,34 @@ pressed_modifiers = set()
 modifier_keys = {"ctrl", "alt", "shift", "windows", "right ctrl", "right alt", "right shift", "right windows"}
 keymap_json_filename = os.path.join(os.path.dirname(__file__), "keymaps.json")
 config_path = os.path.join(os.path.dirname(__file__), "config.json")
+config = {}
+with open(config_path, encoding="utf-8") as f:
+    config_json = json.load(f)
+    for data in config_json:
+        config[data["name"]] = data["value"]
+print(config)
 
 # public/overlayをマウント
 app.mount("/overlay", StaticFiles(directory="public/overlay"), name="overlay")
 
 @app.get("/overlay")
-async def read_index():
+async def read_overlay_index():
     return FileResponse("public/overlay/index.html")
+
+@app.get("/setting")
+async def read_setting_index():
+    return FileResponse("public/setting/index.html")
+
+@app.get("/config.json")
+async def get_config():
+    return FileResponse(config_path)
+
+@app.post("/save-config")
+async def save_config(request: Request):
+    data = await request.json()
+    with open(config_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+    return {"status": "ok"}
 
 @app.websocket("/ws")
 async def websocket_endpoint(websocket: WebSocket):
@@ -80,7 +101,7 @@ from PIL import Image
 import webbrowser
 
 def on_open_settings(icon, item):
-    webbrowser.open("http://localhost:8000/setting")
+    webbrowser.open("http://localhost:"+str(config.get("port", 8000))+"/setting")
 
 def on_quit(icon, item):
     icon.stop()
@@ -88,7 +109,7 @@ def on_quit(icon, item):
 
 def on_copy_url():
     import pyperclip
-    pyperclip.copy("http://localhost:8000/overlay")
+    pyperclip.copy("http://localhost:"+str(config.get("port", 8000))+"/overlay")
 
 def setup_tray_icon():
     icon_path = os.path.join(os.path.dirname(__file__), "public", "tray.png")
@@ -108,7 +129,7 @@ def setup_tray_icon():
 async def startup_event():
     threading.Thread(target=keyboard.hook, args=(on_key_event,), daemon=True).start()
     setup_tray_icon()
-    print("http://127.0.0.1:8000/overlay")
+    print("http://127.0.0.1:"+str(config.get("port", 8000))+"/overlay")
 
 if __name__ == "__main__":
     import uvicorn
