@@ -10,6 +10,8 @@ app = FastAPI()
 clients = set()
 key_event_queue = asyncio.Queue()
 loop = asyncio.get_event_loop()
+pressed_modifiers = set()
+modifier_keys = {"ctrl", "alt", "shift", "windows", "right ctrl", "right alt", "right shift", "right windows"}
 keymap_json_filename = "keymaps.json"
 
 # public/overlayをマウント
@@ -46,12 +48,27 @@ def convert_key_from_keymaps_json(key: str) -> str:
 # 押されたキーの組み合わせを取得
 def on_key_event(e):
     if e.event_type == "down":
-        pressed = keyboard._pressed_events.keys()
-        keys = [keyboard.key_to_scan_codes(k)[0] if isinstance(k, str) else k for k in pressed]
-        names = keyboard._pressed_events.keys()
-        combo = keyboard.get_hotkey_name()
-        converted = convert_key_from_keymaps_json(combo)
-        asyncio.run_coroutine_threadsafe(key_event_queue.put(converted), loop)
+        is_modifier = False
+        name = e.name.lower()
+
+        if name in modifier_keys:
+            is_modifier = True
+            is_first_press = name not in pressed_modifiers
+            pressed_modifiers.add(convert_key_from_keymaps_json(name))
+            # print(pressed_modifiers)
+            if not is_first_press:
+                return
+        
+        combo = [convert_key_from_keymaps_json(name)]
+        if not is_modifier: combo = list(pressed_modifiers) + [name]
+        formatted = " + ".join(combo).title()
+        asyncio.run_coroutine_threadsafe(key_event_queue.put(formatted), loop)
+
+    elif e.event_type == "up":
+        name = e.name.lower()
+        if name in modifier_keys:
+            pressed_modifiers.discard(convert_key_from_keymaps_json(name))
+            # print(pressed_modifiers)
 
 @app.on_event("startup")
 async def startup_event():
