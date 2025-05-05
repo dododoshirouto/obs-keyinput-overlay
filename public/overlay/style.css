@@ -19,7 +19,7 @@ body {
     font-family: "LINE Seed JP_OTF", sans-serif;
     font-weight: bold;
 
-    transition-property:
+    transition:
         box-shadow 30ms ease-out,
         transform 30ms ease-out,
         opacity 200ms ease-in-out;

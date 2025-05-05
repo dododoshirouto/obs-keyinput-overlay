@@ -5,6 +5,7 @@ import keyboard
 import asyncio
 import threading
 import json
+import os
 
 app = FastAPI()
 clients = set()
@@ -12,7 +13,8 @@ key_event_queue = asyncio.Queue()
 loop = asyncio.get_event_loop()
 pressed_modifiers = set()
 modifier_keys = {"ctrl", "alt", "shift", "windows", "right ctrl", "right alt", "right shift", "right windows"}
-keymap_json_filename = "keymaps.json"
+keymap_json_filename = os.path.join(os.path.dirname(__file__), "keymaps.json")
+config_path = os.path.join(os.path.dirname(__file__), "config.json")
 
 # public/overlayをマウント
 app.mount("/overlay", StaticFiles(directory="public/overlay"), name="overlay")
@@ -76,13 +78,13 @@ def on_key_event(e):
 import pystray
 from PIL import Image
 import webbrowser
-import os
 
 def on_open_settings(icon, item):
     webbrowser.open("http://localhost:8000/setting")
 
 def on_quit(icon, item):
     icon.stop()
+    os._exit(0)
 
 def on_copy_url():
     import pyperclip
