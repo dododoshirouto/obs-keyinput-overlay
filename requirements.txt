@@ -1,5 +1,13 @@
+# サーバ
 fastapi
 uvicorn
-# pynput
+
+# キーインプット取得
 keyboard
+
+# WebSocket
 python-socketio
+
+# タスクトレイアイコン
+pystray
+pillow
