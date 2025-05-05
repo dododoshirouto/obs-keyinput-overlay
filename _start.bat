@@ -1,1 +1,1 @@
-uvicorn server:app --reload
+venv/Scripts/python server.py

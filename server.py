@@ -102,7 +102,7 @@ from PIL import Image
 import webbrowser
 
 def on_open_settings(icon, item):
-    webbrowser.open("http://localhost:"+str(config.get("port", 8000))+"/setting")
+    webbrowser.open("http://localhost:"+str(config.get("port"))+"/setting")
 
 def on_quit(icon, item):
     icon.stop()
@@ -113,7 +113,7 @@ def on_quit(icon, item):
 
 def on_copy_url():
     import pyperclip
-    pyperclip.copy("http://localhost:"+str(config.get("port", 8000))+"/overlay")
+    pyperclip.copy("http://localhost:"+str(config.get("port"))+"/overlay")
 
 def setup_tray_icon():
     icon_path = os.path.join(os.path.dirname(__file__), "public", "tray.png")
@@ -136,6 +136,8 @@ async def startup_event():
 
 if __name__ == "__main__":
     import uvicorn
-    config_uvicorn = uvicorn.Config("server:app", port=int(config.get("port", 8000)), reload=True)
+    print("config", config)
+    asyncio.run(startup_event())
+    config_uvicorn = uvicorn.Config("server:app", port=int(config.get("port")), reload=True)
     server_instance = uvicorn.Server(config_uvicorn)
     server_instance.run()

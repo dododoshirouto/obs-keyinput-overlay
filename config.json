@@ -1,18 +1,24 @@
 [
-    {
-        "name": "port",
-        "value": "8000",
-        "type": "number",
-        "description": "requires restart"
-    },
-    {
-        "name": "align",
-        "value": "left",
-        "type": "select",
-        "options": [
-            "left",
-            "center",
-            "right"
-        ]
-    }
+  {
+    "name": "port",
+    "value": "8123",
+    "type": "number",
+    "description": "requires restart"
+  },
+  {
+    "name": "align",
+    "value": "right",
+    "type": "select",
+    "options": [
+      "left",
+      "center",
+      "right"
+    ]
+  },
+  {
+    "name": "duration",
+    "value": "500",
+    "type": "number",
+    "description": "(ms)"
+  }
 ]

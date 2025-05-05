@@ -1,11 +1,30 @@
-const ws = new WebSocket("ws://localhost:8000/ws");
+var ws = null;
 const container = document.getElementById("keys");
 
-ws.onmessage = e => {
-    const { keys } = JSON.parse(e.data);
+config = [];
+last_init = 0;
+function init() {
+    if (Date.now() - last_init < 1000 * 5) return;
+    last_init = Date.now();
 
-    displayKey(keys[0]);
-};
+    fetch('/config.json').then(res => res.json()).then(json => json.forEach(v => {
+        config[v.name] = v.value;
+        document.body.classList = [];
+        for (let key in config) {
+            document.body.classList.add(key);
+            document.body.classList.add(key + '-' + config[key].replace(/[-\s]+/g, '-'));
+        }
+
+        if (!ws) {
+            ws = new WebSocket("ws://localhost:" + config.port + "/ws");
+            ws.onmessage = e => {
+                const { keys } = JSON.parse(e.data);
+
+                displayKey(keys[0]);
+            };
+        }
+    }));
+}
 
 
 
@@ -17,9 +36,16 @@ function displayKey(key) {
     clearTimeout(settimeoutid);
     settimeoutid = setTimeout(() => {
         keyElem.classList.remove("open");
-    }, 500);
+    }, config.duration ?? 500);
     keyElem.classList.add("press");
     setTimeout(() => {
         keyElem.classList.remove("press");
     }, 30);
+    init();
 }
+
+window.addEventListener("load", init);
+
+window.addEventListener("onerror", e => {
+    document.getElementById("debug").innerHTML += e.message + "\n";
+});

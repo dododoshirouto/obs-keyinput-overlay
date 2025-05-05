@@ -10,6 +10,14 @@ body {
     padding: 1em;
 }
 
+body.align-center #keys {
+    justify-content: center;
+}
+
+body.align-right #keys {
+    justify-content: flex-end;
+}
+
 .key {
     background: rgba(0, 0, 0, 0.6);
     color: white;
