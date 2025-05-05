@@ -1,13 +1,14 @@
-body {
+* {
+    box-sizing: border-box;
     margin: 0;
-    background: transparent;
-    overflow: hidden;
+    padding: 0;
 }
 
-#keys {
-    display: flex;
-    gap: 1em;
-    padding: 1em;
+body {
+    background: transparent;
+    overflow: hidden;
+    position: relative;
+    height: 100vh;
 }
 
 body.align-center #keys {
@@ -18,8 +19,25 @@ body.align-right #keys {
     justify-content: flex-end;
 }
 
+body.vertical-center #keys {
+    align-items: center;
+}
+
+body.vertical-bottom #keys {
+    align-items: flex-end;
+}
+
+#keys {
+    display: flex;
+    gap: 1em;
+    padding: 1em;
+    position: absolute;
+    width: 100%;
+    height: 100%;
+}
+
 .key {
-    background: rgba(0, 0, 0, 0.6);
+    background: rgb(92, 92, 92);
     color: white;
     font-size: 2em;
     padding: 0.2em 0.5em;
@@ -32,7 +50,7 @@ body.align-right #keys {
         transform 30ms ease-out,
         opacity 200ms ease-in-out;
     transform: translateY(0px);
-    box-shadow: 0px 14px rgba(0, 0, 0, 0.8);
+    box-shadow: 0px 14px rgb(43, 43, 43);
 }
 
 .key.open {
@@ -45,6 +63,6 @@ body.align-right #keys {
 }
 
 .key.press {
-    box-shadow: 0px 7px rgba(0, 0, 0, 0.8);
+    box-shadow: 0px 7px rgba(43, 43, 43);
     transform: translateY(7px);
 }
