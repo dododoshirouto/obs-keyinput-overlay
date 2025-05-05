@@ -137,7 +137,6 @@ async def startup_event():
 if __name__ == "__main__":
     import uvicorn
     print("config", config)
-    asyncio.run(startup_event())
     config_uvicorn = uvicorn.Config("server:app", port=int(config.get("port")), reload=True)
     server_instance = uvicorn.Server(config_uvicorn)
     server_instance.run()
