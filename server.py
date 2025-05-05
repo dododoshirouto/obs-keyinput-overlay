@@ -20,7 +20,8 @@ with open(config_path, encoding="utf-8") as f:
     config_json = json.load(f)
     for data in config_json:
         config[data["name"]] = data["value"]
-print(config)
+
+server_instance = None
 
 # public/overlayをマウント
 app.mount("/overlay", StaticFiles(directory="public/overlay"), name="overlay")
@@ -105,6 +106,9 @@ def on_open_settings(icon, item):
 
 def on_quit(icon, item):
     icon.stop()
+    global server_instance
+    if server_instance:
+        server_instance.should_exit = True
     os._exit(0)
 
 def on_copy_url():
@@ -129,8 +133,9 @@ def setup_tray_icon():
 async def startup_event():
     threading.Thread(target=keyboard.hook, args=(on_key_event,), daemon=True).start()
     setup_tray_icon()
-    print("http://127.0.0.1:"+str(config.get("port", 8000))+"/overlay")
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("server:app", reload=True)
+    config_uvicorn = uvicorn.Config("server:app", port=int(config.get("port", 8000)), reload=True)
+    server_instance = uvicorn.Server(config_uvicorn)
+    server_instance.run()
