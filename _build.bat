@@ -17,9 +17,9 @@ echo [INFO] Building executable...
   --onefile ^
   --icon %ICON% ^
   --name %NAME% ^
+  --windowed ^
+  --noconsole ^
   %ENTRYPOINT%
-@REM   --windowed ^
-@REM   --noconsole ^
 
 echo [INFO] Copying config files and public assets...
 xcopy config.json dist\ /Y >nul
