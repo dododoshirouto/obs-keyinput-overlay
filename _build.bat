@@ -1,3 +1,4 @@
+: _build.bat
 @echo off
 setlocal
 
@@ -14,10 +15,16 @@ echo [INFO] Building executable...
   --noconfirm ^
   --clean ^
   --onefile ^
-  --windowed ^
   --icon %ICON% ^
   --name %NAME% ^
   %ENTRYPOINT%
+@REM   --windowed ^
+@REM   --noconsole ^
+
+echo [INFO] Copying config files and public assets...
+xcopy config.json dist\ /Y >nul
+xcopy keymaps.json dist\ /Y >nul
+xcopy /E /I /Y public dist\public >nul
 
 echo [INFO] Build complete. Executable is in /dist/%NAME%.exe
 pause

@@ -1,20 +1,29 @@
 from fastapi import FastAPI, WebSocket, Request
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
+from contextlib import asynccontextmanager
 import keyboard
 import asyncio
 import threading
 import json
+import sys
 import os
 
-app = FastAPI()
+
 clients = set()
 key_event_queue = asyncio.Queue()
-loop = asyncio.get_event_loop()
+loop = None
 pressed_modifiers = set()
 modifier_keys = {"ctrl", "alt", "shift", "windows", "right ctrl", "right alt", "right shift", "right windows"}
-keymap_json_filename = os.path.join(os.path.dirname(__file__), "keymaps.json")
-config_path = os.path.join(os.path.dirname(__file__), "config.json")
+if getattr(sys, 'frozen', False):
+    # PyInstallerでビルドされたexeの場合
+    BASE_DIR = os.path.dirname(sys.executable)
+else:
+    # スクリプト実行中（開発時）の場合
+    BASE_DIR = os.path.abspath(os.path.dirname(__file__))
+keymap_path = os.path.join(BASE_DIR, "keymaps.json")
+config_path = os.path.join(BASE_DIR, "config.json")
+static_dir = os.path.join(BASE_DIR, "public")
 config = {}
 with open(config_path, encoding="utf-8") as f:
     config_json = json.load(f)
@@ -23,16 +32,28 @@ with open(config_path, encoding="utf-8") as f:
 
 server_instance = None
 
+
+# @app.on_event("startup")
+@asynccontextmanager
+async def startup_event(app: FastAPI):
+    global loop
+    loop = asyncio.get_running_loop()
+    threading.Thread(target=keyboard.hook, args=(on_key_event,), daemon=True).start()
+    setup_tray_icon()
+    yield
+
+app = FastAPI(lifespan=startup_event)
+
 # public/overlayをマウント
-app.mount("/overlay", StaticFiles(directory="public/overlay"), name="overlay")
+app.mount("/overlay", StaticFiles(directory=os.path.join(static_dir, "overlay")), name="overlay")
 
 @app.get("/overlay")
 async def read_overlay_index():
-    return FileResponse("public/overlay/index.html")
+    return FileResponse(os.path.join(static_dir, "overlay", "index.html"))
 
 @app.get("/setting")
 async def read_setting_index():
-    return FileResponse("public/setting/index.html")
+    return FileResponse(os.path.join(static_dir, "setting", "index.html"))
 
 @app.get("/config.json")
 async def get_config():
@@ -49,6 +70,7 @@ async def save_config(request: Request):
 async def websocket_endpoint(websocket: WebSocket):
     await websocket.accept()
     clients.add(websocket)
+    print("WS CONNECTED:", websocket.client)
     try:
         while True:
             key = await key_event_queue.get()
@@ -60,7 +82,7 @@ async def websocket_endpoint(websocket: WebSocket):
 
 def convert_key_from_keymaps_json(key: str) -> str:
     try:
-        with open(keymap_json_filename, encoding='utf-8') as f:
+        with open(keymap_path, encoding='utf-8') as f:
             keymaps = json.load(f)
         for keymap in keymaps:
             if key in keymap["key"]:
@@ -71,6 +93,7 @@ def convert_key_from_keymaps_json(key: str) -> str:
 
 # 押されたキーの組み合わせを取得
 def on_key_event(e):
+    print(e.name)
     if e.event_type == "down":
         is_modifier = False
         name = e.name.lower()
@@ -116,7 +139,7 @@ def on_copy_url():
     pyperclip.copy("http://localhost:"+str(config.get("port"))+"/overlay")
 
 def setup_tray_icon():
-    icon_path = os.path.join(os.path.dirname(__file__), "public", "tray.png")
+    icon_path = os.path.join(BASE_DIR, "public", "tray.png")
     image = Image.open(icon_path)
 
     icon = pystray.Icon("obs-keyinput-overlay", image, "KeyOverlay", menu=pystray.Menu(
@@ -129,14 +152,21 @@ def setup_tray_icon():
 
 
 
-@app.on_event("startup")
-async def startup_event():
-    threading.Thread(target=keyboard.hook, args=(on_key_event,), daemon=True).start()
-    setup_tray_icon()
+
+# not use
+async def main():
+    import uvicorn
+    config_uvicorn = uvicorn.Config("server:app", port=int(config.get("port")), log_config=None)
+    global server_instance
+    server_instance = uvicorn.Server(config_uvicorn)
+    await server_instance.serve()
 
 if __name__ == "__main__":
+    # asyncio.run(main())
+    import asyncio
     import uvicorn
-    print("config", config)
-    config_uvicorn = uvicorn.Config("server:app", port=int(config.get("port")), reload=True)
-    server_instance = uvicorn.Server(config_uvicorn)
-    server_instance.run()
+
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+
+    uvicorn.run(app, host="0.0.0.0", port=int(config.get("port")), log_config=None)

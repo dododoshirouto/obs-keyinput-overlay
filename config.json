@@ -1,34 +1,34 @@
 [
-    {
-        "name": "port",
-        "value": "8123",
-        "type": "number",
-        "description": "requires restart"
-    },
-    {
-        "name": "align",
-        "value": "right",
-        "type": "select",
-        "options": [
-            "left",
-            "center",
-            "right"
-        ]
-    },
-    {
-        "name": "vertical",
-        "value": "bottom",
-        "type": "select",
-        "options": [
-            "top",
-            "center",
-            "bottom"
-        ]
-    },
-    {
-        "name": "duration",
-        "value": "500",
-        "type": "number",
-        "description": "(ms)"
-    }
+  {
+    "name": "port",
+    "value": "8123",
+    "type": "number",
+    "description": "requires restart"
+  },
+  {
+    "name": "align",
+    "value": "right",
+    "type": "select",
+    "options": [
+      "left",
+      "center",
+      "right"
+    ]
+  },
+  {
+    "name": "vertical",
+    "value": "bottom",
+    "type": "select",
+    "options": [
+      "top",
+      "center",
+      "bottom"
+    ]
+  },
+  {
+    "name": "duration",
+    "value": "501",
+    "type": "number",
+    "description": "(ms)"
+  }
 ]

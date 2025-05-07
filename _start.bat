@@ -1,1 +1,1 @@
-venv/Scripts/python server.py
+venv\Scripts\python server.py
